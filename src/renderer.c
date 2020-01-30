@@ -3,6 +3,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
+
 renderer *init_rend()
 {
     renderer *r = (renderer *)malloc(sizeof(struct renderer));
@@ -17,6 +19,10 @@ renderer *init_rend()
 		None
     };
 
+
+	glXCreateContextAttribsARBProc glXCreateContextAttribsARB = 0;
+	glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)
+           glXGetProcAddressARB( (const GLubyte *) "glXCreateContextAttribsARB" );
 	r->ctx = glXCreateContextAttribsARB(r->win->display, r->win->fbc, NULL, True, gl3attr);
 
 	if (!r->ctx) {
@@ -64,6 +70,7 @@ renderer *init_rend()
 	return r;
 }
 
+/*
 void loadCharacter(unsigned long c)
 {
     if (FT_Load_Char(face, c, FT_LOAD_RENDER))
@@ -105,6 +112,7 @@ void loadCharacter(unsigned long c)
 
 	checkErrors("Loading character");
 }
+*/
 
 void linkBuffers(renderer *r)
 {
@@ -128,6 +136,7 @@ void linkBuffers(renderer *r)
 
 	checkErrors("Linking buffers");
 
+	/*
 	glGenTextures(1, &r->audioSamples);
     glBindTexture(GL_TEXTURE_1D, r->audioSamples);
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -152,11 +161,13 @@ void linkBuffers(renderer *r)
 	glUniform1i(glGetUniformLocation(r->progID, "samples"), 0);
     glUniform1i(glGetUniformLocation(r->progID, "fft"), 1);
     glUniform1i(glGetUniformLocation(r->progID, "albumArt"), 2);
+	*/
 
     checkErrors("Linking textures");
 
 	glUseProgram(r->progText);
 
+	/*
 	if (FT_Init_FreeType(&ft)) {
     	printf("ERROR::FREETYPE: Could not init FreeType Library\n");
 		exit(1);
@@ -178,6 +189,7 @@ void linkBuffers(renderer *r)
 
 	for (unsigned long c = 0; c < 127; c++)
         loadCharacter(c);
+	*/
 
 	glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -189,9 +201,10 @@ void linkBuffers(renderer *r)
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
  
-	checkErrors("Loading font");
+	//checkErrors("Loading font");
 }
 
+/*
 void renderText(renderer *r, char *_text, GLfloat x, GLfloat y, GLfloat scale, float *color)
 {
     if (strlen(_text) == 0)
@@ -268,6 +281,7 @@ void renderText(renderer *r, char *_text, GLfloat x, GLfloat y, GLfloat scale, f
 
     free(text);
 }
+*/
 
 void render(renderer *r, float *sampleBuff, float *fftBuff, int buffSize)
 {
@@ -275,6 +289,7 @@ void render(renderer *r, float *sampleBuff, float *fftBuff, int buffSize)
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	/*
     // Doesn't render if there is no sound
 	if (cfg.dontDrawIfNoSound) {
 		bool noNewSound = true;
@@ -287,6 +302,7 @@ void render(renderer *r, float *sampleBuff, float *fftBuff, int buffSize)
 				return;
 			}
 	}
+	*/
 
     // Configure & link opengl
     glEnable(GL_BLEND);
@@ -295,6 +311,7 @@ void render(renderer *r, float *sampleBuff, float *fftBuff, int buffSize)
 	glUseProgram(r->progID);
 	glBindVertexArray(vertArray);
 
+	/*
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_1D, r->audioSamples);
     glTexImage1D(GL_TEXTURE_1D, 0, GL_R16, buffSize, 0, GL_RED, GL_FLOAT, sampleBuff);
@@ -326,6 +343,7 @@ void render(renderer *r, float *sampleBuff, float *fftBuff, int buffSize)
 		r->songInfo.newAlbumArt = false;
 		stbi_image_free(r->songInfo.albumArt);
 	}
+	*/
 
     // Set uniforms for shaders
     GLint timeLoc = glGetUniformLocation(r->progID, "time");
@@ -334,8 +352,10 @@ void render(renderer *r, float *sampleBuff, float *fftBuff, int buffSize)
     GLint resolutionLoc = glGetUniformLocation(r->progID, "resolution");
     if (resolutionLoc != -1) glUniform2f(resolutionLoc, (float)r->win->width, (float)r->win->height);
 
+	/*
     GLint positionLoc = glGetUniformLocation(r->progID, "position");
     if (positionLoc != -1) glUniform1f(positionLoc, r->songInfo.position / ((float)r->songInfo.length + 0.01));
+	*/
 
     // Draw screen
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -343,6 +363,7 @@ void render(renderer *r, float *sampleBuff, float *fftBuff, int buffSize)
 	char *time;
 	time = getSystemTime();
 
+	/*
 	if (cfg.shaderName && !strcmp(cfg.shaderName, "black")) {
 		float textColor[] = {0.0, 0.0, 0.0};
 		renderText(r, r->songInfo.artist, -1.0f, 0.5371f, 1.25f, textColor);
@@ -354,6 +375,7 @@ void render(renderer *r, float *sampleBuff, float *fftBuff, int buffSize)
 		renderText(r, r->songInfo.artist, 0.206f, 0.4102f, 1.0f, textColor);
 		renderText(r, r->songInfo.title, 0.206f, 0.3418f, 0.75f, textColor);
 	}
+	*/
 
 	checkErrors("Draw screen");
 	swapBuffers(r->win);
@@ -362,7 +384,8 @@ void render(renderer *r, float *sampleBuff, float *fftBuff, int buffSize)
 void checkErrors(const char *desc) {
 	GLenum e = glGetError();
 	if (e != GL_NO_ERROR) {
-		printf("OpenGL error in \"%s\": %s (%d)\n", desc, gluErrorString(e), e);
+		fprintf(stderr, "OpenGL error in \"%s\": %s (%d)\n",
+		        desc, gluErrorString(e), e);
 		exit(1);
 	}
 }

@@ -1,0 +1,96 @@
+#!/bin/sh
+
+CONF_VERSION="`git describe`"
+CONF_BUILD_NAME="liveW $CONF_VERSION"
+CONF_TARGETS="liveW"
+CONF_PREFIX=/usr/local
+CONF_SYSROOT=
+CONF_CFLAGS=""
+
+CONF_DEBUG=0
+CONF_ENABLE_AUDIO=0
+CONF_ENABLE_MUSIC=0
+
+# Parse the given options
+for arg in $@; do
+	OPT_KEY="`echo $arg | cut -d= -f1`"
+	OPT_VAL="`echo $arg | cut -d= -f2`"
+
+	case "$OPT_KEY" in
+		--prefix)
+			CONF_PREFIX="$OPT_VAL"
+			;;
+
+		--sysroot)
+			CONF_SYSROOT="$OPT_VAL"
+			;;
+
+		--help|-h)
+			cat <<- END_OF_HELP
+				This script sets configuration values for (this fork of) liveW.
+
+				Options:
+				  -h,  --help             Display this help message and exit.
+				       --prefix=[path]    Set the installation root to the given path.
+				       --sysroot=[path]   Set the path for the system root. This is prepended
+				                          to the PREFIX variable when copying files, and is
+				                          useful for cross-compiling, chroot installs, etc.
+				  -d,  --debug            Specify that this is a debug build. This option
+				                          toggles some debugging messages.
+				  -es, --enable-audio     Enable passing audio to the shaders.
+				  -ef, --enable-music     Enable music info display.
+				  -ea, --enable-all       Enable everything extra
+				  -s,  --static           Output a static executable.
+			END_OF_HELP
+			exit 0
+			;;
+
+		--debug|-d)
+			CONF_CFLAGS="$CONF_CFLAGS -Og -ggdb"
+			CONF_DEBUG=1
+			;;
+
+		--enable-audio|-da)
+			CONF_ENABLE_AUDIO=1
+			;;
+
+		--enable-music|-df)
+			CONF_ENABLE_MUSIC_INFO=1
+			;;
+
+		--enable-all|-da)
+			CONF_ENABLE_AUDIO=1
+			CONF_ENABLE_MUSIC_INFO=1
+			;;
+
+		--static|-s)
+			CONF_CFLAGS="$CONF_FLAGS -static"
+			;;
+
+		*)
+			echo "configure: error: Unknown option \"$OPT_KEY\""
+			exit 1
+	esac
+done;
+
+echo "BUILD_NAME = $CONF_BUILD_NAME"
+echo "TARGETS    = $CONF_TARGETS"
+echo "PREFIX     = $CONF_PREFIX"
+echo "SYSROOT    = $CONF_SYSROOT"
+echo "Full install path: $CONF_SYSROOT$CONF_PREFIX"
+
+# Write the options to the makefile
+echo "Generating makefile..."
+echo "PREFIX=$CONF_PREFIX"   >  Makefile
+echo "SYSROOT=$CONF_SYSROOT" >> Makefile
+echo "CONF_TARGETS=$CONF_TARGETS" >> Makefile
+echo "CONF_CFLAGS=$CONF_CFLAGS" >> Makefile
+cat Makefile.conf >> Makefile
+
+# Set flags in config.h
+echo "Generating config.h..."
+sed "s#SOME_PREFIX_HERE#$CONF_PREFIX/share/livew#" < include/livew/config.h.tmp > include/livew/config.h
+echo "#define LIVEW_ENABLE_AUDIO $CONF_ENABLE_AUDIO" >> include/livew/config.h
+echo "#define LIVEW_ENABLE_MUSIC $CONF_ENABLE_MUSIC" >> include/livew/config.h
+echo "#define LIVEW_DEBUG $CONF_DEBUG" >> include/livew/config.h
+echo "#define LIVEW_BUILD_NAME \"$CONF_BUILD_NAME\"" >> include/livew/config.h

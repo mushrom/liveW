@@ -1,5 +1,4 @@
-#ifndef _CONFIG_H_
-#define _CONFIG_H_
+#pragma once
 
 #include <stdbool.h>
 #include <string.h>
@@ -25,4 +24,7 @@ struct config {
 void printHelp();
 bool parseArgs(int argc, char *argv[]);
 
-#endif // _CONFIG_H_
+#define LIVEW_ENABLE_AUDIO 0
+#define LIVEW_ENABLE_MUSIC 0
+#define LIVEW_DEBUG 0
+#define LIVEW_BUILD_NAME "liveW v0"
